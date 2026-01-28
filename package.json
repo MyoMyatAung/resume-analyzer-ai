@@ -1,0 +1,27 @@
+{
+  "name": "resume-analyzer-ai",
+  "version": "1.0.0",
+  "description": "AI Worker Service for Resume Analysis using LangChain and BullMQ",
+  "main": "dist/worker.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/worker.js",
+    "dev": "ts-node src/worker.ts",
+    "dev:watch": "nodemon --exec ts-node src/worker.ts",
+    "test:push": "ts-node src/test-producer.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.58",
+    "@langchain/google-genai": "^0.2.0",
+    "axios": "^1.6.2",
+    "bullmq": "^5.1.0",
+    "dotenv": "^16.3.1",
+    "ioredis": "^5.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
+  }
+}
