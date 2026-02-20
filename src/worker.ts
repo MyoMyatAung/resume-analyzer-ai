@@ -1,9 +1,8 @@
-import { Worker, Job } from 'bullmq';
-import { config } from './config';
-import { analyzeResume, ResumeAnalysisInput } from './processor';
-import { generateContent, ContentGenerationInput } from './content-generator';
+import { Worker, Job, Queue } from 'bullmq';
+import { config, getRedisConnection } from './config';
+import { analyzeResume } from './processor';
+import { generateContent } from './content-generator';
 import { sendWebhook, sendAIContentWebhook } from './utils/webhook';
-import IORedis from 'ioredis';
 
 // Job data types
 interface AnalysisJobData {
@@ -36,17 +35,6 @@ console.log('🚀 Starting Resume Analysis Worker...');
 console.log(`📡 Connecting to Redis at ${config.redis.host}:${config.redis.port}`);
 console.log(`📋 Listening on queue: ${config.queue.name}`);
 
-const connection = config.redis.url
-  ? new IORedis(config.redis.url, { maxRetriesPerRequest: null })
-  : new IORedis({
-    host: config.redis.host,
-    port: config.redis.port,
-    password: config.redis.password,
-    username: config.redis.username,
-    tls: config.redis.tls ? {} : undefined,
-    maxRetriesPerRequest: null,
-  });
-
 const worker = new Worker<JobData>(
   config.queue.name,
   async (job: Job<JobData>) => {
@@ -61,7 +49,7 @@ const worker = new Worker<JobData>(
     return await processAnalysisJob(job as Job<AnalysisJobData>);
   },
   {
-    connection,
+    connection: getRedisConnection(),
     concurrency: 2,
   }
 );
@@ -71,13 +59,10 @@ const worker = new Worker<JobData>(
  */
 async function processAnalysisJob(job: Job<AnalysisJobData>) {
   try {
-    const input: ResumeAnalysisInput = {
-      resumeText: job.data.resumeText,
-      jobDescription: job.data.jobDescription,
-    };
 
     console.log(`🔍 Processing resume analysis...`);
-    const result = await analyzeResume(input);
+    const result = await analyzeResume(job.data.resumeText, job.data.jobDescription);
+
     console.log(`✅ Analysis complete for job ${job.data.jobId}`);
 
     // Notify backend of success

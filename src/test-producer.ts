@@ -1,25 +1,13 @@
 import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
-import { config } from './config';
+import { config, getRedisConnection } from './config';
 
 /**
  * A simple script to push a mock job to the Redis queue for testing the AI worker.
  */
 async function testProducer() {
-  const connection = config.redis.url
-    ? new IORedis(config.redis.url, { maxRetriesPerRequest: null })
-    : new IORedis({
-      host: config.redis.host,
-      port: config.redis.port,
-      password: config.redis.password,
-      username: config.redis.username,
-      tls: config.redis.tls ? {} : undefined,
-      maxRetriesPerRequest: null,
-    });
-
   console.log(`🚀 Connecting to Redis...`);
 
-  const myQueue = new Queue(config.queue.name, { connection });
+  const myQueue = new Queue(config.queue.name, { connection: getRedisConnection() });
 
   const mockJobData = {
     jobId: 'test-job-' + Date.now(),
