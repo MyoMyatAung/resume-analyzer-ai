@@ -1,23 +1,29 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM node:20-alpine
 
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install --omit=dev
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
 
 # Standard Railway environment variables will be used at runtime
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "run", "start"]
